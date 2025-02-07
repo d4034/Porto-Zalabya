@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#4A90E2">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-title" content="بورتو زلابية">
+    <title>Porto Zalabya</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icons/icon-192x192.png">
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://kit.fontawesome.com/8614526ba6.js" crossorigin="anonymous"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: Arial, sans-serif;
+      }
+    </style>
+</head>
+<body>
+    <nav class="main-nav">
+        <div class="nav-container">
+            <div class="logo">
+                <h1>🍯 بورتو زلابية</h1>
+            </div>
+            <div class="nav-buttons">
+                <button class="nav-btn" onclick="goToHome()">
+                    <i class="fas fa-home"></i>
+                    <span>الرئيسية</span>
+                </button>
+                <button class="nav-btn cart-btn" onclick="openCart()">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span style="font-size: 24px; color: red;">السلة</span>
+                    <span class="cart-badge" id="cart-badge">0</span>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="hero-section">
+        <div class="hero-content">
+            <h2>أشهى الزلابية الطازجة</h2>
+            <p>نقدم لكم ألذ أنواع الزلابية المصنوعة بحب وعناية</p>
+        </div>
+    </div>
+
+    <main>
+        <section class="categories">
+            <h2>تصنيفاتنا</h2>
+            <div class="search-container">
+                <div class="search-box">
+                    <input type="text" id="search-input" placeholder="ابحث عن منتج...">
+                    <i class="fas fa-search search-icon"></i>
+                </div>
+            </div>
+            <div class="category-buttons">
+        
+            </div>
+        </section>
+
+        <section id="menu" class="products-grid"></section>
+    </main>
+
+    <!-- نافذة السلة -->
+    <div id="cart-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>سلة المشتريات</h2>
+                <button class="close-btn" onclick="closeCart()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="cart-items-container">
+                <ul id="cart-items"></ul>
+                <div class="cart-total">
+                    <h3>المجموع الكلي:</h3>
+                    <p><span id="total">0</span> جنيه</p>
+                </div>
+            </div>
+            <div class="customer-info">
+                <h3>معلومات التوصيل</h3>
+                <form id="order-form" class="order-form">
+                    <div class="form-group">
+                        <label for="customer-name">الاسم</label>
+                        <input type="text" id="customer-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="customer-phone">رقم الهاتف</label>
+                        <input type="tel" id="customer-phone" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="customer-address">العنوان</label>
+                        <textarea id="customer-address" required></textarea>
+                    </div>
+                    <button type="submit" class="submit-order-btn">
+                        <i class="fas fa-check"></i>
+                        تأكيد الطلب
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- نافذة تأكيد الطلب -->
+    <div id="confirmation-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>تم استلام طلبك</h2>
+                <button class="close-btn" onclick="closeConfirmation()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="confirmation-content">
+                <i class="fas fa-check-circle success-icon"></i>
+                <p>سيتم التواصل معك قريباً لتأكيد الطلب</p>
+                <p>رقم الطلب: <span id="order-number"></span></p>
+            </div>
+        </div>
+    </div>
+
+    <div id="price-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>عايز تشتري بكام؟</h2>
+                <button class="close-btn" onclick="closePriceModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="price-input-container">
+                <div class="product-details">
+                    <h3 id="selected-product-name"></h3>
+                    <p>سعر الكيلو: <span id="selected-product-price"></span> جنيه</p>
+                </div>
+                <div class="form-group">
+                    <label for="price-input">عايز تشتري بكام جنيه؟</label>
+                    <input type="number" id="price-input" min="1" step="1" placeholder="اكتب المبلغ هنا" required>
+                    <p class="quantity-preview">هتاخد تقريباً: <span id="quantity-preview">0</span> كيلو</p>
+                </div>
+                <button class="submit-price-btn" onclick="confirmPrice()">
+                    <i class="fas fa-check"></i>
+                    تمام
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="loading-screen" class="loading-screen">
+        <div class="spinner"></div>
+    </div>
+
+    <footer>
+        <div class="footer-content">
+            <div class="contact-info">
+                <h3>تواصل معنا</h3>
+                <p><i class="fas fa-phone"></i> 01273580725</p>
+                <p><i class="fas fa-map-marker-alt"></i>العنوان: شارع ١١ المتفرع من ٤٥ العصافره قبلي اما مطعم ابو خالد‏  </p>
+            </div>
+            <div class="social-links">
+                <a href="https://www.facebook.com/profile.php?id=61570582224913" class="social-link" target="_blank">
+                    <i class="fab fa-facebook-f"></i>
+                </a>
+                <a href="https://chat.whatsapp.com/FabRplO5NqdBd1TWkXANKk" class="social-link" target="_blank">
+                    <i class="fab fa-whatsapp"></i>
+                </a>
+            </div>
+        </div>
+    </footer>
+
+    <div id="notification" class="notification">
+        <p id="notification-message"></p>
+    </div>
+
+    <script src="js.min.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(registration => {
+                        console.log('ServiceWorker registration successful');
+                    })
+                    .catch(err => {
+                        console.log('ServiceWorker registration failed: ', err);
+                    });
+            });
+        }
+    </script>
+</body>
+</html>
